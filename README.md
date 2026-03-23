@@ -4,6 +4,55 @@
 
 Thai license plate detection and recognition from still images, with a complete pipeline for detection, OCR, Thai-specific text normalization, ranking, and output generation.
 
+## Evaluation Mode
+
+รองรับโหมดประเมินผลกับ ground truth CSV เพื่อใช้วัดคุณภาพก่อนขึ้น production จริง
+
+คอลัมน์ที่รองรับใน CSV:
+
+1. `image_path` จำเป็น
+2. `plate_text` จำเป็น
+3. `province` จำเป็น
+4. `combined_text` ไม่จำเป็น ถ้าไม่ใส่ระบบจะสร้างจาก `plate_text + province`
+5. `vehicle_type` ไม่จำเป็น แต่แนะนำสำหรับ leaderboard ต่อชนิดรถ
+6. `bbox_x1`, `bbox_y1`, `bbox_x2`, `bbox_y2` ไม่จำเป็น แต่ถ้าใส่จะคำนวณ detection IoU และ `detection_iou_at_0_5`
+
+ตัวอย่างไฟล์อยู่ที่ [ground_truth_sample.csv](ground_truth_sample.csv)
+
+ตัวอย่างคำสั่ง:
+
+```bash
+/Users/kidpech/thai_license_plate/.venv/bin/python thai_license_plate.py --input-dir batch_input --recursive --ground-truth-csv ground_truth_sample.csv --output-basename batch_plate --no-debug
+```
+
+ไฟล์รายงานที่ได้:
+
+1. `evaluation_report.json`
+2. `evaluation_report.csv`
+3. `evaluation_leaderboard.json`
+4. `evaluation_leaderboard.csv`
+5. `thai_char_confusion_report.json`
+6. `thai_char_confusion_report.csv`
+7. `results_summary.jsonl`
+8. `results_summary.csv`
+
+metric ที่รายงาน:
+
+1. exact accuracy ของทะเบียน
+2. exact accuracy ของจังหวัด
+3. exact accuracy ของข้อความรวม
+4. mean character error rate ของทะเบียน
+5. mean character error rate ของจังหวัด
+6. mean character error rate ของข้อความรวม
+7. mean IoU ของ detection ถ้ามี bbox ground truth
+8. detection success ที่ threshold `IoU >= 0.5`
+
+leaderboard/report เพิ่มเติม:
+
+1. per-province accuracy
+2. per-vehicle-type accuracy
+3. Thai character confusion analysis สำหรับอักษรบนทะเบียน
+
 ## Language Navigation
 
 - ภาษาไทย: เริ่มที่หัวข้อ `ภาพรวม`
@@ -59,14 +108,14 @@ Thai license plate detection and recognition from still images, with a complete 
 
 ## Tech Stack
 
-| Layer | Technology | หน้าที่ |
-| --- | --- | --- |
-| Language | Python 3 | orchestration และ business logic |
-| Computer Vision | OpenCV | โหลดภาพ, preprocess, contour detection, annotation |
-| Detector | Ultralytics YOLOWorld | หา candidate ของป้ายทะเบียนจาก prompt |
-| OCR | EasyOCR | อ่านข้อความไทยและอังกฤษจากภาพ crop |
-| Configuration | JSON | เก็บ prompts, thresholds, จังหวัด, confusion rules |
-| Outputs | JSON, JSONL, CSV, JPEG | เก็บผลลัพธ์สุดท้าย, debug และ batch summary |
+| Layer           | Technology             | หน้าที่                                            |
+| --------------- | ---------------------- | -------------------------------------------------- |
+| Language        | Python 3               | orchestration และ business logic                   |
+| Computer Vision | OpenCV                 | โหลดภาพ, preprocess, contour detection, annotation |
+| Detector        | Ultralytics YOLOWorld  | หา candidate ของป้ายทะเบียนจาก prompt              |
+| OCR             | EasyOCR                | อ่านข้อความไทยและอังกฤษจากภาพ crop                 |
+| Configuration   | JSON                   | เก็บ prompts, thresholds, จังหวัด, confusion rules |
+| Outputs         | JSON, JSONL, CSV, JPEG | เก็บผลลัพธ์สุดท้าย, debug และ batch summary        |
 
 ## Tech Stack Diagram
 
@@ -343,62 +392,62 @@ flowchart LR
 
 ### Configuration and CLI
 
-| Function | Responsibility |
-| --- | --- |
-| `setup_logging` | ตั้งค่า logging level และรูปแบบข้อความ log |
+| Function             | Responsibility                                                             |
+| -------------------- | -------------------------------------------------------------------------- |
+| `setup_logging`      | ตั้งค่า logging level และรูปแบบข้อความ log                                 |
 | `load_domain_config` | โหลด JSON config และแปลง confusion groups / series prefixes ให้พร้อมใช้งาน |
-| `parse_args` | แปลง CLI arguments เป็น `AppConfig` |
-| `build_output_paths` | สร้าง path ของไฟล์ output ตามชื่อภาพและ basename |
+| `parse_args`         | แปลง CLI arguments เป็น `AppConfig`                                        |
+| `build_output_paths` | สร้าง path ของไฟล์ output ตามชื่อภาพและ basename                           |
 
 ### Geometry and Image Preparation
 
-| Function | Responsibility |
-| --- | --- |
-| `load_image` | อ่านไฟล์ภาพจาก disk และ fail เร็วหากเปิดไม่ได้ |
-| `clamp_box` | บังคับ bounding box ไม่ให้ออกนอกขนาดภาพ |
-| `expand_box` | ขยายกล่องที่ตรวจพบเพื่อเก็บ margin ให้ OCR อ่านง่ายขึ้น |
-| `is_plate_like` | กรองกล่องด้วย aspect ratio และ relative area |
+| Function           | Responsibility                                                    |
+| ------------------ | ----------------------------------------------------------------- |
+| `load_image`       | อ่านไฟล์ภาพจาก disk และ fail เร็วหากเปิดไม่ได้                    |
+| `clamp_box`        | บังคับ bounding box ไม่ให้ออกนอกขนาดภาพ                           |
+| `expand_box`       | ขยายกล่องที่ตรวจพบเพื่อเก็บ margin ให้ OCR อ่านง่ายขึ้น           |
+| `is_plate_like`    | กรองกล่องด้วย aspect ratio และ relative area                      |
 | `preprocess_plate` | สร้างภาพ grayscale, enlarged, Otsu, adaptive threshold สำหรับ OCR |
 
 ### Thai Text Normalization
 
-| Function | Responsibility |
-| --- | --- |
-| `clean_text` | ล้าง whitespace จากผล OCR |
-| `extract_plate_letters` | ดึงเฉพาะอักษรไทยจากข้อความ |
-| `get_confusion_options` | คืนชุดตัวอักษรที่อาจสับสนกันตาม config |
-| `score_confusion_resolution` | ให้คะแนน candidate ตามความใกล้เคียงกับอักษร OCR เดิม |
-| `generate_plate_letter_candidates` | แตก candidate จาก confusion groups ของ prefix ไทย |
-| `extract_series_prefix_digit` | แยกเลขนำหน้าพิเศษหากมี |
-| `score_letter_candidate` | ให้คะแนน prefix ตาม vehicle type และคุณภาพ candidate |
-| `normalize_plate_line` | สร้างและเลือกบรรทัดทะเบียนที่ดีที่สุดจาก OCR หลาย candidate |
-| `normalize_province_line` | map ชื่อจังหวัดจาก OCR ให้ตรงกับรายชื่อจังหวัดจริง |
-| `read_plate_lines` | OCR หลาย variant แล้วแยกผลเป็นบรรทัดบนและล่าง |
-| `score_plate_result` | ให้คะแนนผลลัพธ์รวมจากรูปแบบทะเบียนและจังหวัด |
+| Function                           | Responsibility                                              |
+| ---------------------------------- | ----------------------------------------------------------- |
+| `clean_text`                       | ล้าง whitespace จากผล OCR                                   |
+| `extract_plate_letters`            | ดึงเฉพาะอักษรไทยจากข้อความ                                  |
+| `get_confusion_options`            | คืนชุดตัวอักษรที่อาจสับสนกันตาม config                      |
+| `score_confusion_resolution`       | ให้คะแนน candidate ตามความใกล้เคียงกับอักษร OCR เดิม        |
+| `generate_plate_letter_candidates` | แตก candidate จาก confusion groups ของ prefix ไทย           |
+| `extract_series_prefix_digit`      | แยกเลขนำหน้าพิเศษหากมี                                      |
+| `score_letter_candidate`           | ให้คะแนน prefix ตาม vehicle type และคุณภาพ candidate        |
+| `normalize_plate_line`             | สร้างและเลือกบรรทัดทะเบียนที่ดีที่สุดจาก OCR หลาย candidate |
+| `normalize_province_line`          | map ชื่อจังหวัดจาก OCR ให้ตรงกับรายชื่อจังหวัดจริง          |
+| `read_plate_lines`                 | OCR หลาย variant แล้วแยกผลเป็นบรรทัดบนและล่าง               |
+| `score_plate_result`               | ให้คะแนนผลลัพธ์รวมจากรูปแบบทะเบียนและจังหวัด                |
 
 ### Recognition Orchestration
 
-| Method | Responsibility |
-| --- | --- |
-| `PlateRecognizer.__init__` | โหลด YOLO-World และ EasyOCR runtime |
-| `infer_vehicle_type_from_plate` | เดาประเภทรถจากสีป้ายเมื่อผู้ใช้เลือก `auto` |
-| `find_plate_by_contours` | หา candidate ป้ายจาก contour และ ROI ด้านล่างของรถ |
-| `collect_yolo_detections` | ยิง YOLO-World หลาย prompt แล้วรวม detection |
-| `merge_candidates` | ใช้ NMS เพื่อลดกล่องซ้ำและคัด top candidates |
-| `process_image` | pipeline หลักตั้งแต่ detect, crop, OCR, normalize, score ไปจนถึงเลือก best result |
+| Method                          | Responsibility                                                                    |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `PlateRecognizer.__init__`      | โหลด YOLO-World และ EasyOCR runtime                                               |
+| `infer_vehicle_type_from_plate` | เดาประเภทรถจากสีป้ายเมื่อผู้ใช้เลือก `auto`                                       |
+| `find_plate_by_contours`        | หา candidate ป้ายจาก contour และ ROI ด้านล่างของรถ                                |
+| `collect_yolo_detections`       | ยิง YOLO-World หลาย prompt แล้วรวม detection                                      |
+| `merge_candidates`              | ใช้ NMS เพื่อลดกล่องซ้ำและคัด top candidates                                      |
+| `process_image`                 | pipeline หลักตั้งแต่ detect, crop, OCR, normalize, score ไปจนถึงเลือก best result |
 
 ### Persistence and Batch Reporting
 
-| Function | Responsibility |
-| --- | --- |
-| `annotate_and_save` | วาดกรอบและข้อความลงภาพผลลัพธ์ |
-| `save_crop` | บันทึกภาพ crop ของป้ายทะเบียน |
-| `write_result_json` | บันทึกผลลัพธ์สุดท้ายของภาพเดียว |
-| `write_debug_json` | บันทึก candidate และ ranking ทั้งหมดเพื่อ debug |
+| Function              | Responsibility                                          |
+| --------------------- | ------------------------------------------------------- |
+| `annotate_and_save`   | วาดกรอบและข้อความลงภาพผลลัพธ์                           |
+| `save_crop`           | บันทึกภาพ crop ของป้ายทะเบียน                           |
+| `write_result_json`   | บันทึกผลลัพธ์สุดท้ายของภาพเดียว                         |
+| `write_debug_json`    | บันทึก candidate และ ranking ทั้งหมดเพื่อ debug         |
 | `write_summary_files` | สร้าง `results_summary.jsonl` และ `results_summary.csv` |
-| `is_valid_image` | ตรวจว่านามสกุลไฟล์รองรับหรือไม่ |
-| `iter_input_images` | สร้าง iterator สำหรับ single image หรือ batch input |
-| `main` | entry point ของโปรแกรมและตัวควบคุม flow ทั้งหมด |
+| `is_valid_image`      | ตรวจว่านามสกุลไฟล์รองรับหรือไม่                         |
+| `iter_input_images`   | สร้าง iterator สำหรับ single image หรือ batch input     |
+| `main`                | entry point ของโปรแกรมและตัวควบคุม flow ทั้งหมด         |
 
 ## Configuration Model
 
@@ -425,14 +474,14 @@ flowchart LR
 
 ### Output Artifacts
 
-| File Pattern | Meaning |
-| --- | --- |
-| `*_annotated.jpeg` | ภาพต้นฉบับที่วาดกรอบและข้อความผลลัพธ์แล้ว |
-| `*_crop.jpeg` | crop ของป้ายทะเบียน |
-| `*.json` | ผลลัพธ์สุดท้ายของภาพนั้น |
-| `*_debug.json` | candidate และ ranking ทั้งหมดเพื่อวิเคราะห์ย้อนหลัง |
-| `results_summary.jsonl` | สรุปผลแบบ machine-friendly สำหรับ batch |
-| `results_summary.csv` | สรุปผลแบบตาราง |
+| File Pattern            | Meaning                                             |
+| ----------------------- | --------------------------------------------------- |
+| `*_annotated.jpeg`      | ภาพต้นฉบับที่วาดกรอบและข้อความผลลัพธ์แล้ว           |
+| `*_crop.jpeg`           | crop ของป้ายทะเบียน                                 |
+| `*.json`                | ผลลัพธ์สุดท้ายของภาพนั้น                            |
+| `*_debug.json`          | candidate และ ranking ทั้งหมดเพื่อวิเคราะห์ย้อนหลัง |
+| `results_summary.jsonl` | สรุปผลแบบ machine-friendly สำหรับ batch             |
+| `results_summary.csv`   | สรุปผลแบบตาราง                                      |
 
 ### Example Result
 
@@ -557,14 +606,14 @@ Prompts, thresholds, province lists, confusion groups, and valid series prefixes
 
 ## Tech Stack (EN)
 
-| Layer | Technology | Purpose |
-| --- | --- | --- |
-| Language | Python 3 | Orchestration and business logic |
-| Computer Vision | OpenCV | Image loading, preprocessing, contour detection, annotation |
-| Detector | Ultralytics YOLOWorld | Prompt-based plate candidate detection |
-| OCR | EasyOCR | Thai and English text extraction |
-| Configuration | JSON | Thresholds, prompts, provinces, and confusion rules |
-| Outputs | JSON, JSONL, CSV, JPEG | Result storage, debug artifacts, and batch summaries |
+| Layer           | Technology             | Purpose                                                     |
+| --------------- | ---------------------- | ----------------------------------------------------------- |
+| Language        | Python 3               | Orchestration and business logic                            |
+| Computer Vision | OpenCV                 | Image loading, preprocessing, contour detection, annotation |
+| Detector        | Ultralytics YOLOWorld  | Prompt-based plate candidate detection                      |
+| OCR             | EasyOCR                | Thai and English text extraction                            |
+| Configuration   | JSON                   | Thresholds, prompts, provinces, and confusion rules         |
+| Outputs         | JSON, JSONL, CSV, JPEG | Result storage, debug artifacts, and batch summaries        |
 
 ## Architecture Notes (EN)
 
@@ -582,62 +631,62 @@ The Mermaid diagrams above already reflect the detailed runtime structure, detec
 
 ### Configuration and CLI
 
-| Function | Responsibility |
-| --- | --- |
-| `setup_logging` | Configure log level and message format |
+| Function             | Responsibility                                                                 |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `setup_logging`      | Configure log level and message format                                         |
 | `load_domain_config` | Load JSON configuration and transform confusion groups and series prefix rules |
-| `parse_args` | Convert CLI arguments into `AppConfig` |
-| `build_output_paths` | Create output paths for image-level artifacts |
+| `parse_args`         | Convert CLI arguments into `AppConfig`                                         |
+| `build_output_paths` | Create output paths for image-level artifacts                                  |
 
 ### Geometry and Image Preparation
 
-| Function | Responsibility |
-| --- | --- |
-| `load_image` | Read an image from disk and fail fast if it cannot be opened |
-| `clamp_box` | Keep a bounding box inside the image boundaries |
-| `expand_box` | Add margin around a detected box before OCR |
-| `is_plate_like` | Filter regions using aspect ratio and relative area heuristics |
+| Function           | Responsibility                                                     |
+| ------------------ | ------------------------------------------------------------------ |
+| `load_image`       | Read an image from disk and fail fast if it cannot be opened       |
+| `clamp_box`        | Keep a bounding box inside the image boundaries                    |
+| `expand_box`       | Add margin around a detected box before OCR                        |
+| `is_plate_like`    | Filter regions using aspect ratio and relative area heuristics     |
 | `preprocess_plate` | Produce grayscale, enlarged, Otsu, and adaptive-threshold variants |
 
 ### Thai Text Normalization
 
-| Function | Responsibility |
-| --- | --- |
-| `clean_text` | Normalize OCR whitespace |
-| `extract_plate_letters` | Keep only Thai letters from OCR text |
-| `get_confusion_options` | Return valid confusion-group alternatives for a character |
-| `score_confusion_resolution` | Score how closely a candidate matches the original OCR letters |
-| `generate_plate_letter_candidates` | Expand Thai plate prefix candidates from confusion groups |
-| `extract_series_prefix_digit` | Extract optional leading series digits |
-| `score_letter_candidate` | Score a letter candidate using vehicle-type rules |
-| `normalize_plate_line` | Build and choose the best plate line candidate |
-| `normalize_province_line` | Resolve province text against real Thai provinces |
-| `read_plate_lines` | OCR multiple variants and split upper and lower text logic |
-| `score_plate_result` | Score final plausibility of plate text and province |
+| Function                           | Responsibility                                                 |
+| ---------------------------------- | -------------------------------------------------------------- |
+| `clean_text`                       | Normalize OCR whitespace                                       |
+| `extract_plate_letters`            | Keep only Thai letters from OCR text                           |
+| `get_confusion_options`            | Return valid confusion-group alternatives for a character      |
+| `score_confusion_resolution`       | Score how closely a candidate matches the original OCR letters |
+| `generate_plate_letter_candidates` | Expand Thai plate prefix candidates from confusion groups      |
+| `extract_series_prefix_digit`      | Extract optional leading series digits                         |
+| `score_letter_candidate`           | Score a letter candidate using vehicle-type rules              |
+| `normalize_plate_line`             | Build and choose the best plate line candidate                 |
+| `normalize_province_line`          | Resolve province text against real Thai provinces              |
+| `read_plate_lines`                 | OCR multiple variants and split upper and lower text logic     |
+| `score_plate_result`               | Score final plausibility of plate text and province            |
 
 ### Recognition Orchestration
 
-| Method | Responsibility |
-| --- | --- |
-| `PlateRecognizer.__init__` | Load YOLO-World and EasyOCR runtimes |
-| `infer_vehicle_type_from_plate` | Infer vehicle type from plate color when `auto` is used |
-| `find_plate_by_contours` | Generate plate candidates from lower-ROI contour analysis |
-| `collect_yolo_detections` | Run YOLO-World across multiple prompts and collect detections |
-| `merge_candidates` | Apply NMS and keep the strongest unique candidates |
-| `process_image` | Run the end-to-end recognition pipeline and return ranked results |
+| Method                          | Responsibility                                                    |
+| ------------------------------- | ----------------------------------------------------------------- |
+| `PlateRecognizer.__init__`      | Load YOLO-World and EasyOCR runtimes                              |
+| `infer_vehicle_type_from_plate` | Infer vehicle type from plate color when `auto` is used           |
+| `find_plate_by_contours`        | Generate plate candidates from lower-ROI contour analysis         |
+| `collect_yolo_detections`       | Run YOLO-World across multiple prompts and collect detections     |
+| `merge_candidates`              | Apply NMS and keep the strongest unique candidates                |
+| `process_image`                 | Run the end-to-end recognition pipeline and return ranked results |
 
 ### Persistence and Batch Reporting
 
-| Function | Responsibility |
-| --- | --- |
-| `annotate_and_save` | Save the annotated image |
-| `save_crop` | Save the cropped plate image |
-| `write_result_json` | Save the final per-image result JSON |
-| `write_debug_json` | Save ranked candidates and debug details |
+| Function              | Responsibility                                          |
+| --------------------- | ------------------------------------------------------- |
+| `annotate_and_save`   | Save the annotated image                                |
+| `save_crop`           | Save the cropped plate image                            |
+| `write_result_json`   | Save the final per-image result JSON                    |
+| `write_debug_json`    | Save ranked candidates and debug details                |
 | `write_summary_files` | Write `results_summary.jsonl` and `results_summary.csv` |
-| `is_valid_image` | Check whether a file is a supported input image |
-| `iter_input_images` | Iterate over a single image or a batch directory |
-| `main` | Program entry point and top-level orchestrator |
+| `is_valid_image`      | Check whether a file is a supported input image         |
+| `iter_input_images`   | Iterate over a single image or a batch directory        |
+| `main`                | Program entry point and top-level orchestrator          |
 
 ## Configuration Model (EN)
 
@@ -664,14 +713,14 @@ The Mermaid diagrams above already reflect the detailed runtime structure, detec
 
 ### Output Artifacts
 
-| File Pattern | Meaning |
-| --- | --- |
-| `*_annotated.jpeg` | Original image with the selected plate region and final text |
-| `*_crop.jpeg` | Cropped plate image |
-| `*.json` | Final per-image result |
-| `*_debug.json` | Ranked candidates and intermediate debug information |
-| `results_summary.jsonl` | Machine-friendly batch summary |
-| `results_summary.csv` | Tabular batch summary |
+| File Pattern            | Meaning                                                      |
+| ----------------------- | ------------------------------------------------------------ |
+| `*_annotated.jpeg`      | Original image with the selected plate region and final text |
+| `*_crop.jpeg`           | Cropped plate image                                          |
+| `*.json`                | Final per-image result                                       |
+| `*_debug.json`          | Ranked candidates and intermediate debug information         |
+| `results_summary.jsonl` | Machine-friendly batch summary                               |
+| `results_summary.csv`   | Tabular batch summary                                        |
 
 ### Example Result
 

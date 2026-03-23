@@ -1,0 +1,3 @@
+group_type,group_value,samples,plate_exact_accuracy,province_exact_accuracy,combined_exact_accuracy,mean_plate_cer,mean_province_cer,mean_combined_cer,mean_iou,detection_iou_at_0_5
+expected_province,กรุงเทพมหานคร,1,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0
+expected_vehicle_type,private_pickup,1,1.0,1.0,1.0,0.0,0.0,0.0,1.0,1.0

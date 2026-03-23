@@ -1,0 +1,85 @@
+{
+  "aggregate": {
+    "total_ground_truth_rows": 1,
+    "total_predictions": 1,
+    "evaluated_rows": 1,
+    "missing_ground_truth_rows": 0,
+    "missing_prediction_rows": 0,
+    "plate_exact_accuracy": 1.0,
+    "province_exact_accuracy": 1.0,
+    "combined_exact_accuracy": 1.0,
+    "mean_plate_cer": 0.0,
+    "mean_province_cer": 0.0,
+    "mean_combined_cer": 0.0,
+    "mean_iou": 1.0,
+    "detection_iou_at_0_5": 1.0
+  },
+  "rows": [
+    {
+      "image_path": "car_image.jpeg",
+      "status": "success",
+      "evaluation_status": "evaluated",
+      "expected_vehicle_type": "private_pickup",
+      "predicted_vehicle_type": "private_pickup",
+      "expected_plate_text": "ตก 8534",
+      "predicted_plate_text": "ตก 8534",
+      "expected_province": "กรุงเทพมหานคร",
+      "predicted_province": "กรุงเทพมหานคร",
+      "expected_combined_text": "ตก 8534 กรุงเทพมหานคร",
+      "predicted_combined_text": "ตก 8534 กรุงเทพมหานคร",
+      "expected_bbox": {
+        "x1": 228,
+        "y1": 567,
+        "x2": 972,
+        "y2": 719
+      },
+      "predicted_bbox": {
+        "x1": 228,
+        "y1": 567,
+        "x2": 972,
+        "y2": 719
+      },
+      "iou": 1.0,
+      "detection_iou_at_0_5": true,
+      "plate_exact_match": true,
+      "province_exact_match": true,
+      "combined_exact_match": true,
+      "plate_cer": 0.0,
+      "province_cer": 0.0,
+      "combined_cer": 0.0
+    }
+  ],
+  "leaderboards": {
+    "per_province": [
+      {
+        "group_type": "expected_province",
+        "group_value": "กรุงเทพมหานคร",
+        "samples": 1,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "per_vehicle_type": [
+      {
+        "group_type": "expected_vehicle_type",
+        "group_value": "private_pickup",
+        "samples": 1,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ]
+  },
+  "thai_char_confusions": []
+}

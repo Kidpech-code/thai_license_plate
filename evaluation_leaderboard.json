@@ -1,0 +1,32 @@
+{
+  "per_province": [
+    {
+      "group_type": "expected_province",
+      "group_value": "กรุงเทพมหานคร",
+      "samples": 1,
+      "plate_exact_accuracy": 1.0,
+      "province_exact_accuracy": 1.0,
+      "combined_exact_accuracy": 1.0,
+      "mean_plate_cer": 0.0,
+      "mean_province_cer": 0.0,
+      "mean_combined_cer": 0.0,
+      "mean_iou": 1.0,
+      "detection_iou_at_0_5": 1.0
+    }
+  ],
+  "per_vehicle_type": [
+    {
+      "group_type": "expected_vehicle_type",
+      "group_value": "private_pickup",
+      "samples": 1,
+      "plate_exact_accuracy": 1.0,
+      "province_exact_accuracy": 1.0,
+      "combined_exact_accuracy": 1.0,
+      "mean_plate_cer": 0.0,
+      "mean_province_cer": 0.0,
+      "mean_combined_cer": 0.0,
+      "mean_iou": 1.0,
+      "detection_iou_at_0_5": 1.0
+    }
+  ]
+}
