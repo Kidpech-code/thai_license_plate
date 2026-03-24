@@ -5,6 +5,9 @@
     "evaluated_rows": 1,
     "missing_ground_truth_rows": 0,
     "missing_prediction_rows": 0,
+    "success_rate": 1.0,
+    "low_confidence_rate": 0.0,
+    "failed_rate": 0.0,
     "plate_exact_accuracy": 1.0,
     "province_exact_accuracy": 1.0,
     "combined_exact_accuracy": 1.0,
@@ -16,28 +19,34 @@
   },
   "rows": [
     {
-      "image_path": "car_image.jpeg",
+      "image_path": "car_image.jpg",
       "status": "success",
       "evaluation_status": "evaluated",
       "expected_vehicle_type": "private_pickup",
       "predicted_vehicle_type": "private_pickup",
-      "expected_plate_text": "ตก 8534",
-      "predicted_plate_text": "ตก 8534",
+      "expected_split_tag": "validation",
+      "expected_view": "rear",
+      "expected_lighting": "day",
+      "expected_distance_bucket": "medium",
+      "expected_occlusion": "none",
+      "expected_scene": "street",
+      "expected_plate_text": "ฒก 8534",
+      "predicted_plate_text": "ฒก 8534",
       "expected_province": "กรุงเทพมหานคร",
       "predicted_province": "กรุงเทพมหานคร",
-      "expected_combined_text": "ตก 8534 กรุงเทพมหานคร",
-      "predicted_combined_text": "ตก 8534 กรุงเทพมหานคร",
+      "expected_combined_text": "ฒก 8534 กรุงเทพมหานคร",
+      "predicted_combined_text": "ฒก 8534 กรุงเทพมหานคร",
       "expected_bbox": {
         "x1": 228,
-        "y1": 567,
+        "y1": 880,
         "x2": 972,
-        "y2": 719
+        "y2": 1074
       },
       "predicted_bbox": {
         "x1": 228,
-        "y1": 567,
+        "y1": 880,
         "x2": 972,
-        "y2": 719
+        "y2": 1074
       },
       "iou": 1.0,
       "detection_iou_at_0_5": true,
@@ -50,11 +59,14 @@
     }
   ],
   "leaderboards": {
-    "per_province": [
+    "expected_province": [
       {
         "group_type": "expected_province",
         "group_value": "กรุงเทพมหานคร",
         "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
         "plate_exact_accuracy": 1.0,
         "province_exact_accuracy": 1.0,
         "combined_exact_accuracy": 1.0,
@@ -65,11 +77,122 @@
         "detection_iou_at_0_5": 1.0
       }
     ],
-    "per_vehicle_type": [
+    "expected_vehicle_type": [
       {
         "group_type": "expected_vehicle_type",
         "group_value": "private_pickup",
         "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "expected_split_tag": [
+      {
+        "group_type": "expected_split_tag",
+        "group_value": "validation",
+        "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "expected_view": [
+      {
+        "group_type": "expected_view",
+        "group_value": "rear",
+        "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "expected_lighting": [
+      {
+        "group_type": "expected_lighting",
+        "group_value": "day",
+        "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "expected_distance_bucket": [
+      {
+        "group_type": "expected_distance_bucket",
+        "group_value": "medium",
+        "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "expected_occlusion": [
+      {
+        "group_type": "expected_occlusion",
+        "group_value": "none",
+        "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
+        "plate_exact_accuracy": 1.0,
+        "province_exact_accuracy": 1.0,
+        "combined_exact_accuracy": 1.0,
+        "mean_plate_cer": 0.0,
+        "mean_province_cer": 0.0,
+        "mean_combined_cer": 0.0,
+        "mean_iou": 1.0,
+        "detection_iou_at_0_5": 1.0
+      }
+    ],
+    "expected_scene": [
+      {
+        "group_type": "expected_scene",
+        "group_value": "street",
+        "samples": 1,
+        "success_rate": 1.0,
+        "low_confidence_rate": 0.0,
+        "failed_rate": 0.0,
         "plate_exact_accuracy": 1.0,
         "province_exact_accuracy": 1.0,
         "combined_exact_accuracy": 1.0,

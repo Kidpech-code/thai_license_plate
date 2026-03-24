@@ -16,6 +16,7 @@ Thai license plate detection and recognition from still images, with a complete 
 4. `combined_text` ไม่จำเป็น ถ้าไม่ใส่ระบบจะสร้างจาก `plate_text + province`
 5. `vehicle_type` ไม่จำเป็น แต่แนะนำสำหรับ leaderboard ต่อชนิดรถ
 6. `bbox_x1`, `bbox_y1`, `bbox_x2`, `bbox_y2` ไม่จำเป็น แต่ถ้าใส่จะคำนวณ detection IoU และ `detection_iou_at_0_5`
+7. `split_tag`, `view`, `lighting`, `distance_bucket`, `occlusion`, `scene` ไม่จำเป็น แต่แนะนำสำหรับ benchmark matrix และ slice leaderboard
 
 ตัวอย่างไฟล์อยู่ที่ [ground_truth_sample.csv](ground_truth_sample.csv)
 
@@ -41,17 +42,52 @@ metric ที่รายงาน:
 1. exact accuracy ของทะเบียน
 2. exact accuracy ของจังหวัด
 3. exact accuracy ของข้อความรวม
-4. mean character error rate ของทะเบียน
-5. mean character error rate ของจังหวัด
-6. mean character error rate ของข้อความรวม
-7. mean IoU ของ detection ถ้ามี bbox ground truth
-8. detection success ที่ threshold `IoU >= 0.5`
+4. success rate, low confidence rate, failed rate
+5. mean character error rate ของทะเบียน
+6. mean character error rate ของจังหวัด
+7. mean character error rate ของข้อความรวม
+8. mean IoU ของ detection ถ้ามี bbox ground truth
+9. detection success ที่ threshold `IoU >= 0.5`
 
 leaderboard/report เพิ่มเติม:
 
 1. per-province accuracy
 2. per-vehicle-type accuracy
-3. Thai character confusion analysis สำหรับอักษรบนทะเบียน
+3. per-split, per-view, per-lighting, per-distance, per-occlusion, per-scene accuracy เมื่อมีข้อมูลใน CSV
+4. Thai character confusion analysis สำหรับอักษรบนทะเบียน
+
+## Production Status Contract
+
+ผลลัพธ์ระดับภาพถูกจัดเป็น 3 สถานะเพื่อให้ระบบ downstream ตัดสินใจได้ง่ายขึ้น
+
+1. `success` ใช้เมื่อรูปแบบทะเบียนสมบูรณ์, จังหวัดอยู่ในรายการจริง, และคะแนนรวมเกิน threshold
+2. `low_confidence` ใช้เมื่อระบบอ่านได้บางส่วนหรือ confidence ไม่ถึงเกณฑ์ production แต่ยังมีข้อมูลพอให้ review ต่อได้
+3. `failed` ใช้เมื่อไม่พบป้ายหรือ OCR/result quality ต่ำเกินไป
+
+สถานะนี้ถูกเขียนลงในไฟล์ผลลัพธ์ JSON, `results_summary.csv`, `results_summary.jsonl`, และ evaluation reports
+
+## Package Layout
+
+โปรเจกต์ถูกแยกออกจาก single-file script ไปเป็น package จริงใน `plate_recognition/`
+
+1. `config.py` สำหรับ CLI, logging, config loading, input iteration
+2. `geometry.py` สำหรับ image geometry และ preprocessing
+3. `normalization.py` สำหรับ OCR normalization, scoring, confidence gating
+4. `recognizer.py` สำหรับ detector cascade, OCR orchestration, result ranking
+5. `reporting.py` สำหรับ output artifacts
+6. `evaluation.py` สำหรับ benchmark, IoU, CER, และ slice leaderboards
+7. `cli.py` เป็น entrypoint orchestration
+
+`thai_license_plate.py` ยังอยู่เป็น thin wrapper เพื่อคงคำสั่งเดิมไว้
+
+## Detector Strategy
+
+เวอร์ชันนี้เลิกยิง YOLO-World ทุก prompt แบบ flat ทั้งหมด แล้วเปลี่ยนเป็น prompt cascade
+
+1. contour fallback ทำงานทุกครั้งเพื่อสร้าง candidate ราคาถูกก่อน
+2. YOLO-World ทำงานเป็น batch ของ prompt ตามลำดับความน่าเชื่อถือ
+3. ถ้าพบ strong YOLO candidate เกิน threshold ระบบจะหยุด cascade เร็วเพื่อลด latency
+4. candidate ทั้งหมดถูก merge ด้วย NMS ก่อนเข้าสู่ OCR pipeline
 
 ## Language Navigation
 
@@ -104,7 +140,7 @@ leaderboard/report เพิ่มเติม:
 
 ### 4. Config-Driven Rules
 
-ค่าต่าง ๆ เช่น prompts, thresholds, จังหวัด, confusion groups และ prefix แยกไว้ใน `plate_config.json` เพื่อให้ปรับ heuristic ได้โดยไม่ต้องแก้ logic หลักทุกครั้ง
+ค่าต่าง ๆ เช่น prompts, thresholds, จังหวัด, confusion groups, prefix และ valid two-letter series แยกไว้ใน `plate_config.json` เพื่อให้ปรับ heuristic ได้โดยไม่ต้องแก้ logic หลักทุกครั้ง
 
 ## Tech Stack
 
@@ -461,7 +497,8 @@ flowchart LR
 6. เกณฑ์สีเขียวและสีฟ้าที่ใช้ infer ประเภทรถ
 7. รายชื่อจังหวัดไทย
 8. prefix ของป้ายตามประเภทรถ
-9. confusion groups ของตัวอักษรไทย
+9. valid two-letter series ที่ยืนยันแล้วตามประเภทรถ
+10. confusion groups ของตัวอักษรไทย
 
 ## Input and Output
 
@@ -487,7 +524,7 @@ flowchart LR
 
 จากข้อมูลตัวอย่างใน repo ตอนนี้ ระบบให้ผลดังนี้
 
-1. Plate: `ตก 8534`
+1. Plate: `ฒก 8534`
 2. Province: `กรุงเทพมหานคร`
 3. Vehicle type: `private_pickup`
 4. Source: `contour fallback`
@@ -505,13 +542,13 @@ pip install -r requirements.txt
 ### Run single image
 
 ```bash
-python thai_license_plate.py --image car_image.jpeg
+python thai_license_plate.py --image car_image.jpg
 ```
 
 ### Run single image without debug JSON
 
 ```bash
-python thai_license_plate.py --image car_image.jpeg --no-debug
+python thai_license_plate.py --image car_image.jpg --no-debug
 ```
 
 ### Run batch directory
@@ -523,7 +560,7 @@ python thai_license_plate.py --input-dir batch_input --output-basename batch_pla
 ### Force a vehicle type
 
 ```bash
-python thai_license_plate.py --image car_image.jpeg --vehicle-type private_pickup
+python thai_license_plate.py --image car_image.jpg --vehicle-type private_pickup
 ```
 
 ## โครงสร้างไฟล์
@@ -533,7 +570,7 @@ thai_license_plate/
 ├── thai_license_plate.py
 ├── plate_config.json
 ├── yolov8s-worldv2.pt
-├── car_image.jpeg
+├── car_image.jpg
 ├── batch_input/
 ├── requirements.txt
 ├── .gitignore
@@ -602,7 +639,7 @@ This makes ranking decisions inspectable in the saved debug JSON.
 
 ### 4. Config-Driven Rules
 
-Prompts, thresholds, province lists, confusion groups, and valid series prefixes are defined in `plate_config.json`, so heuristics can be tuned without rewriting the main runtime logic.
+Prompts, thresholds, province lists, confusion groups, valid series prefixes, and verified two-letter series are defined in `plate_config.json`, so heuristics can be tuned without rewriting the main runtime logic.
 
 ## Tech Stack (EN)
 
@@ -700,7 +737,8 @@ The Mermaid diagrams above already reflect the detailed runtime structure, detec
 6. green and blue color thresholds for vehicle type inference
 7. Thai province names
 8. valid plate-series prefixes by vehicle type
-9. Thai character confusion groups
+9. verified valid two-letter series by vehicle type
+10. Thai character confusion groups
 
 ## Inputs and Outputs (EN)
 
@@ -726,7 +764,7 @@ The Mermaid diagrams above already reflect the detailed runtime structure, detec
 
 Based on the sample artifacts currently in the repository, the system resolves:
 
-1. Plate: `ตก 8534`
+1. Plate: `ฒก 8534`
 2. Province: `กรุงเทพมหานคร`
 3. Vehicle type: `private_pickup`
 4. Source: `contour fallback`
@@ -744,13 +782,13 @@ pip install -r requirements.txt
 ### Run a single image
 
 ```bash
-python thai_license_plate.py --image car_image.jpeg
+python thai_license_plate.py --image car_image.jpg
 ```
 
 ### Run a single image without debug JSON
 
 ```bash
-python thai_license_plate.py --image car_image.jpeg --no-debug
+python thai_license_plate.py --image car_image.jpg --no-debug
 ```
 
 ### Run a batch directory
@@ -762,7 +800,7 @@ python thai_license_plate.py --input-dir batch_input --output-basename batch_pla
 ### Force a vehicle type
 
 ```bash
-python thai_license_plate.py --image car_image.jpeg --vehicle-type private_pickup
+python thai_license_plate.py --image car_image.jpg --vehicle-type private_pickup
 ```
 
 ## Repository Layout (EN)
@@ -772,7 +810,7 @@ thai_license_plate/
 ├── thai_license_plate.py
 ├── plate_config.json
 ├── yolov8s-worldv2.pt
-├── car_image.jpeg
+├── car_image.jpg
 ├── batch_input/
 ├── requirements.txt
 ├── .gitignore

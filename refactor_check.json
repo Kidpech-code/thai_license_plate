@@ -1,0 +1,24 @@
+{
+  "image_path": "car_image.jpg",
+  "status": "success",
+  "plate_text": "ฒก 8534",
+  "province": "กรุงเทพมหานคร",
+  "combined_text": "ฒก 8534\nกรุงเทพมหานคร",
+  "source": "contour",
+  "prompt": "contour fallback",
+  "vehicle_type": "private_pickup",
+  "confidence": 0.654986,
+  "score": 10.154986,
+  "text_score": 9.5,
+  "decision_reasons": [
+    "plate_pattern_exact",
+    "province_exact",
+    "province_bangkok_bonus"
+  ],
+  "box": {
+    "x1": 228,
+    "y1": 880,
+    "x2": 972,
+    "y2": 1074
+  }
+}

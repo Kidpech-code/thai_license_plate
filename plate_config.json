@@ -1,14 +1,28 @@
 {
   "prompts": [
     "license plate",
-    "car license plate",
     "vehicle registration plate",
+    "car license plate",
     "number plate",
     "thai license plate"
+  ],
+  "prompt_batches": [
+    [
+      "license plate",
+      "vehicle registration plate"
+    ],
+    [
+      "car license plate",
+      "number plate",
+      "thai license plate"
+    ]
   ],
   "confidence_threshold": 0.05,
   "image_size": 1280,
   "max_results": 5,
+  "success_score_threshold": 8.0,
+  "low_confidence_score_threshold": 4.5,
+  "yolo_early_acceptance_confidence": 0.2,
   "lower_roi_y_ratio": 0.45,
   "lower_roi_x_ratio": 0.25,
   "padding_ratio": 0.12,
@@ -41,6 +55,14 @@
     "private_pickup": ["ฒ", "ณ", "ต", "ถ", "บ", "ป", "ผ", "ย", "ร", "ล"],
     "private_van": ["น", "ฬ", "อ", "ฮ"],
     "taxi": ["ท", "ม", "ฟ", "ศ", "ส"]
+  },
+  "valid_two_letter_series_by_vehicle_type": {
+    "auto": [],
+    "any": [],
+    "private_car": [],
+    "private_pickup": ["ฒก"],
+    "private_van": [],
+    "taxi": []
   },
   "thai_character_confusion_groups": [
     ["ต", "ผ", "ฝ", "พ", "ฟ", "ภ", "ฑ", "ฒ", "ท", "ด", "ถ"],

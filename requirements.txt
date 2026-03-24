@@ -1,3 +1,4 @@
-easyocr
-opencv-python
-ultralytics
+easyocr==1.7.2
+opencv-python==4.13.0.92
+ultralytics==8.4.24
+clip @ git+https://github.com/ultralytics/CLIP.git
